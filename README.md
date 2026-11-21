@@ -28,8 +28,6 @@ https://railway.com/deploy?template=https://github.com/<你的账号>/qq-proxy
 | 变量 | 默认 | 说明 |
 |---|---|---|
 | `PORT` | `9999` | 代理监听端口，Railway 变量里也设 9999 |
-| `PROXY_USER` | 空 | 填了就要 Basic 认证 |
-| `PROXY_PASS` | 空 | 配 `PROXY_USER` 一起用 |
 | `TUNNEL_PORT` | `0` | 非 0 时同进程再开 WSS 隧道（配 Railway HTTPS 域名 `/tunnel`） |
 
 ## 验证
@@ -42,23 +40,18 @@ curl -x http://HOST:PORT https://api.ipify.org          # 出口 IP
 curl http://HOST:PORT/health                            # {"ok":true}
 ```
 
-## 认证模式
-
-```sh
-railway variables --set PROXY_USER=u1 --set PROXY_PASS=p1
-curl -x http://u1:p1@HOST:PORT https://api.ipify.org
-```
-
 ## 自动开 TCP Proxy
 
 ```sh
 export RAILWAY_TOKEN=xxx RAILWAY_ENVIRONMENT_ID=xxx RAILWAY_SERVICE_ID=xxx
-bash scripts/enable_tcp.sh 9999
+bash enable_tcp.sh 9999
 ```
 
 输出三行现成地址。API 字段不兼容时，在面板点 `+ TCP Proxy` 选 9999。
 
 ## 文件
+
+所有文件平铺在同一目录：
 
 ```
 server.py         入口：监听 PORT，线程池 accept
@@ -66,7 +59,8 @@ proxy_core.py     HTTP/HTTPS/SOCKS5 三合一（首字节分流）
 tunnel_core.py    WSS 隧道服务端（TUNNEL_PORT 打开时启用）
 Dockerfile        python:3.12-slim + HEALTHCHECK
 railway.json      DOCKERFILE 构建 + /health 健康检查
-scripts/          deploy.sh / enable_tcp.sh
+deploy.sh         一键上线（railway CLI）
+enable_tcp.sh     自动开 TCP Proxy 并打印地址
 ```
 
 ## 端口占用

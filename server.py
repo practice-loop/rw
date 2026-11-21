@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 """Railway 入口：一个端口同时提供 HTTP 正向代理 / CONNECT 隧道 / SOCKS5。
 环境变量：
-  PORT         代理端口，默认 9999
-  PROXY_USER   可选，Basic 认证用户名
-  PROXY_PASS   可选，Basic 认证密码
+  PORT         代理端口，默认 9999（固定开放，无鉴权）
   TUNNEL_PORT  可选，非 0 时同时开 WSS 隧道（配合 Railway HTTPS 域名）
 """
 import os, socket, threading, time
@@ -33,8 +31,7 @@ def main():
     port = int(os.environ.get("PORT", "9999"))
     tport = int(os.environ.get("TUNNEL_PORT", "0"))
     threading.Thread(target=accept_loop, args=(listen(port), proxy_core.handle, "proxy"), daemon=True).start()
-    log("proxy listening 0.0.0.0:%d  (HTTP / CONNECT / SOCKS5, auth=%s)" %
-        (port, "on" if proxy_core.AUTH else "off"))
+    log("proxy listening 0.0.0.0:%d  (HTTP / CONNECT / SOCKS5, no auth)" % port)
     if tport:
         threading.Thread(target=accept_loop, args=(listen(tport), tunnel_core.handle, "tunnel"), daemon=True).start()
         log("wss tunnel listening 0.0.0.0:%d  path=%s" % (tport, tunnel_core.PATH))

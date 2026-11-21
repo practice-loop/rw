@@ -9,12 +9,7 @@ import os, socket, struct, selectors, ssl, sys, threading, time
 from urllib.parse import urlsplit
 
 BUF = 65536
-AUTH = None
-_user = os.environ.get("PROXY_USER", "")
-_pass = os.environ.get("PROXY_PASS", "")
-if _user and _pass:
-    import base64 as _b64
-    AUTH = "Basic " + _b64.b64encode(("%s:%s" % (_user, _pass)).encode()).decode()
+
 CONNECT_TIMEOUT = 15
 IDLE_TIMEOUT = 300
 
@@ -150,17 +145,6 @@ def handle_http(conn, first):
         return
 
     if method_s == "CONNECT":
-        if AUTH:
-            got = None
-            for ln in lines[1:]:
-                k, _, v = ln.partition(b":")
-                if k.strip().lower() == b"proxy-authorization":
-                    got = v.strip().decode()
-            if got != AUTH:
-                conn.sendall(b"HTTP/1.1 407 Proxy Authentication Required\r\n"
-                             b"Proxy-Authenticate: Basic realm=\"proxy\"\r\n"
-                             b"Content-Length: 0\r\nConnection: close\r\n\r\n")
-                return
         host, _, port = target.decode("latin-1").rpartition(":")
         port = int(port) if port.isdigit() else 443
         host = host.strip("[]")
@@ -190,17 +174,6 @@ def handle_http(conn, first):
     if u.query:
         path += "?" + u.query
 
-    if AUTH:
-        got = None
-        for ln in lines[1:]:
-            k, _, v = ln.partition(b":")
-            if k.strip().lower() == b"proxy-authorization":
-                got = v.strip().decode()
-        if got != AUTH:
-            conn.sendall(b"HTTP/1.1 407 Proxy Authentication Required\r\n"
-                         b"Proxy-Authenticate: Basic realm=\"proxy\"\r\n"
-                         b"Content-Length: 0\r\nConnection: close\r\n\r\n")
-            return
     out = [b"%s %s HTTP/1.1" % (method, path.encode("latin-1"))]
     host_hdr_sent = False
     for ln in lines[1:]:
